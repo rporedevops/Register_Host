@@ -1,0 +1,127 @@
+---
+- hosts: all
+  gather_facts: yes
+  tasks:
+    - shell: subscription-manager remove --all
+      register: sub
+      ignore_errors: yes
+
+    - debug: var=sub.stdout_lines
+
+    - shell: subscription-manager unregister
+      register: sub_unregister
+      ignore_errors: yes
+
+    - debug: var=sub_unregister.stdout_lines
+
+    - shell: subscription-manager clean
+      register: sub_clean
+      ignore_errors: yes
+
+    - shell: mv /etc/rhsm/ca/katello-server-ca.pem /tmp
+      register: move_ca
+      ignore_errors: yes
+
+    - debug: var=move_ca.stdout_lines
+
+    - shell: mv /etc/pki/consumer/* /tmp
+      register: move_con
+      ignore_errors: yes
+
+    - debug: var=move_con.stdout_lines
+
+    - shell: mv /etc/pki/entitlement/* /tmp
+      register: move_ent
+      ignore_errors: yes
+
+    - debug: var=move_ent.stdout_lines
+
+    - shell: systemctl restart rhsmcertd
+      register: rhsmcert
+      ignore_errors: yes
+
+    - debug: var=rhsmcert.stdout_lines
+
+    - shell: cp -p /etc/rhsm/rhsm.conf /etc/rhsm/rhsm.conf-$(date +%F)
+      register: cp_rhsm
+      ignore_errors: yes
+
+    - debug: var=cp_rhsm.stdout_lines
+
+    - shell: rpm -qa --last | grep katello-ca-consumer*
+      register: yum_qa
+      ignore_errors: yes
+
+    - debug: var=yum_qa.stdout_lines
+
+    - shell: yum -y remove katello-ca-consumer-burlin001.nwcore.ssen.co.uk-1.0-1.noarch
+      register: yum_remove
+      ignore_errors: yes
+
+    - debug: var=yum_remove.stdout_lines
+
+    - shell: curl --insecure --output katello-ca-consumer-latest.noarch.rpm https://burlin001.nwcore.ssen.co.uk/pub/katello-ca-consumer-latest.noarch.rpm
+      register: curl
+      ignore_errors: yes
+
+    - debug: var=curl.stdout_lines
+
+    - shell: yum -y localinstall katello-ca-consumer-latest.noarch.rpm
+      register: yum_kat
+      ignore_errors: yes
+
+    - debug: var=yum_kat.stdout_lines
+
+    - shell: subscription-manager register --username="admin" --password="new42day" --environment="Library" --force
+      register: sub_reg
+      ignore_errors: yes
+
+    - debug: var=sub_reg.stdout_lines
+
+    - shell: subscription-manager status
+      register: sub_man_stat
+      ignore_errors: yes
+
+    - debug: var=sub_man_stat.stdout_lines
+
+    - shell: subscription-manager list --installed
+      register: sub_man_list
+      ignore_errors: yes
+
+    - debug: var=sub_man_list.stdout_lines
+
+    - shell: subscription-manager release --show
+      register: sub_man_show
+      ignore_errors: yes
+
+    - debug: var=sub_man_show.stdout_lines
+
+    - shell: subscription-manager release --set 7.9
+      register: sub_man_rel
+      ignore_errors: yes
+
+    - debug: var=sub_man_rel.stdout_lines
+
+    - shell: subscription-manager repos --enable=rhel-7-server-optional-rpms
+      register: sub_man_repo
+      ignore_errors: yes
+
+    - debug: var=sub_man_repo.stdout_lines
+
+    - shell: subscription-manager repos --enable=rhel-7-server-extras-rpms
+      register: sub_man_repo_ext
+      ignore_errors: yes
+
+    - debug: var=sub_man_repo_ext.stdout_lines
+
+    - shell: yum clean all
+      register: yum_clean
+      ignore_errors: yes
+
+    - debug: var=yum_clean.stdout_lines
+
+    - shell: yum repolist
+      register: yum_repo
+      ignore_errors: yes
+
+    - debug: var=yum_repo.stdout_lines
